@@ -1,3 +1,5 @@
+from tweepy import API
+from tweepy import Cursor
 from tweepy.streaming import StreamListener #class from streaming module that allows stream listener
 from tweepy import OAuthHandler #class that authenticates 
 from tweepy import Stream #Streaming class
@@ -5,19 +7,30 @@ import dotenv
 dotenv.load_dotenv()
 import os
 
+##TWITTER AUTH CLASS
+class TwitterAuthenticator():
+
+    def authenticate_twitter_app(self):
+        auth = OAuthHandler(os.getenv('CONSUMER_KEY'), os.getenv('CONSUMER_SECRET'))
+        auth.set_access_token(os.getenv('ACCESS_TOKEN'), os.getenv('ACCESS_SECRET'))
+        return auth
+
 class TwitterStreamer():
+
+    def __init__(self):
+        self.twitter_authenticator = TwitterAuthenticator()    
+
     #class for streaming and processing live tweets
     def stream_tweets(self, fetched_tweets_filename, hash_tag_list):
         #this handles auth/connection to stream api
-        listener = StdOutListener()
-        auth = OAuthHandler(os.getenv('CONSUMER_KEY'), os.getenv('CONSUMER_SECRET'))
-        auth.set_access_token(os.getenv('ACCESS_TOKEN'), os.getenv('ACCESS_SECRET'))
+        listener = TwitterListener(fetched_tweets_filename)
+        auth = self.twitter_authenticator.authenticate_twitter_app()
 
         stream = Stream(auth,listener)
 
-        stream.filter(track=[hash_tag_list])
+        stream.filter(track=hash_tag_list)
 
-class StdOutListener(StreamListener): ## basic class that prints recieved tweets 
+class TwitterListener(StreamListener): ## basic class that prints recieved tweets 
 
         def __init__(self, fetched_tweets_filename):
             self.fetched_tweets_filename = fetched_tweets_filename
