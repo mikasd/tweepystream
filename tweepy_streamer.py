@@ -7,6 +7,22 @@ import dotenv
 dotenv.load_dotenv()
 import os
 
+### TWITTER CLIENT
+class TwitterClient(): 
+
+    def __init__(self, twitter_user=None): ##constructor
+        self.auth = TwitterAuthenticator().authenticate_twitter_app()
+        self.twitter_client = API(self.auth)
+        self.twitter_user = twitter_user
+
+    def get_user_timeline_tweets(self, num_tweets):
+        tweets = []
+        for tweet in Cursor(self.twitter_client.user_timeline, id=self.twitter_user).items(num_tweets): ##if no user specified, user timeline defaults to your acct
+            tweets.append(tweet)
+        return tweets
+
+
+
 ##TWITTER AUTH CLASS
 class TwitterAuthenticator():
 
@@ -46,6 +62,9 @@ class TwitterListener(StreamListener): ## basic class that prints recieved tweet
             return True
 
         def on_error(self, status):     #also inhereted from StreamListener, error handler
+            if status == 420:
+                #returning false on data method in case rate limit occurs 
+                return False
             print(status)
 
 
@@ -53,9 +72,12 @@ if __name__ == '__main__':
 
     hash_tag_list = ['donald trump', 'hillary clinton', 'barack obama', 'bernie sanders']
     fetched_tweets_filename = 'tweets.json'
+
+    twitter_client = TwitterClient('pycon')
+    print(twitter_client.get_user_timeline_tweets(1))
     
-    twitter_streamer = TwitterStreamer()
-    twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
+    # twitter_streamer = TwitterStreamer()
+    # twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
     
     
     
