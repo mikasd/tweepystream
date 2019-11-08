@@ -1,0 +1,4 @@
+# language: python
+# imports: tweepy(twitter API interaction), numpy(averaging data and array formation in dataframe), pandas(dataframe and organization),                 matplotlib(visualizing time series information based off of tweets in GUI), textblob(text sentiment analysis)
+-this imports tweets from any user specified, preferably a potentially controversial account or high impact user, and analyses a specified number of their most recent tweets, removes special characters and process the text through textblob sentiment analysis pretrained model and outputs a gauge of positive or negative polarity along with an objectiveness ranking. This information along with any number of a tweet's myriad of data metrics can be assimilated and analyzed using the outline set up here. I've set up pathways to output the pandas dataframe to a text file in the root directory, and also left a partial outline for a matplotlib GUI time series visualization.
+
