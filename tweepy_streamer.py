@@ -3,11 +3,12 @@ from tweepy import Cursor
 from tweepy.streaming import StreamListener #class from streaming module that allows stream listener
 from tweepy import OAuthHandler #class that authenticates 
 from tweepy import Stream #Streaming class
+from textblob import TextBlob
 
 import numpy as np 
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import re   
 import dotenv
 dotenv.load_dotenv()
 import os
@@ -87,8 +88,25 @@ class TwitterListener(StreamListener): ## basic class that prints recieved tweet
             print(status)
 
 class TweetAnalyzer():
+
+    def clean_tweet(self, tweet):
+        #regex that removes special characters from tweets and also removes hyperlinks, prepares tweet for pure text analysis
+        return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", tweet).split())
+
+    def analyze_sentiment(self, tweet):
+        analysis = TextBlob(self.clean_tweet(tweet))
+
+        # sentiment analysis is built into textblob and returns a float for polarity and subjectivity based off of a pretrained model
+        if analysis.sentiment.polarity > 0:
+            return 1
+        elif analysis.sentiment.polarity == 0:
+            return 0
+        else:
+            return -1
+
     #functionality for analyzing and categorzing content from tweets
     def tweets_to_dataframe(self,tweets):
+
         df = pd.DataFrame(data=[tweet.text for tweet in tweets], columns=['tweets'])
         df['id'] = np.array([tweet.id for tweet in tweets])
         df['len'] = np.array([len(tweet.text) for tweet in tweets])
@@ -96,7 +114,10 @@ class TweetAnalyzer():
         df['source'] = np.array([tweet.source for tweet in tweets])
         df['likes'] = np.array([tweet.favorite_count for tweet in tweets])
         df['retweets'] = np.array([tweet.retweet_count for tweet in tweets])
-        return df   
+
+        return df 
+
+
 
 if __name__ == '__main__':
     twitter_client = TwitterClient()
@@ -105,20 +126,24 @@ if __name__ == '__main__':
     tweets = api.user_timeline(screen_name='realDonaldTrump', count=20)
 
     df = tweet_analyzer.tweets_to_dataframe(tweets)
+    df['polarity'] = np.array([tweet_analyzer.analyze_sentiment(tweet) for tweet in df['tweets']])
+
+    #outputs a txt file containing pandas dataframe 
+    base_filename = 'Values.txt'
+    with open(base_filename, 'a') as f:
+        f.write(df.to_string(header = True, index = False))
     
-    #get avg len over all tweets
-    print(np.mean(df['len']))
 
-    #return tweet with highest likes
-    print(np.max(df['likes']))
-
-    #time likes
+    #framework for visualzing a time series graph utilizing matplotlib, uncomment plt.show() if you want to visualize data via GUI
     time_likes = pd.Series(data=df['likes'].values, index=df['date'])
-    time_likes.plot(figsize=(16,4), label='likes', legend=True, color='r')
-    
+    time_likes.plot(figsize=(16, 4), label="likes", legend=True)
+
     time_retweets = pd.Series(data=df['retweets'].values, index=df['date'])
-    time_retweets.plot(figsize=(16,4), color='r')
-    plt.show() 
+    time_retweets.plot(figsize=(16, 4), label="retweets", legend=True)
+    
+    # plt.show()
+    
+
 
     
 
